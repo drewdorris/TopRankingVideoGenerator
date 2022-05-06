@@ -1,11 +1,13 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from moviepy.editor import *
 import os
 import json
 import urllib.request
 import urllib.error
 import sys
 import time
+import glob
 
 # adding path to geckodriver to the OS environment variable
 # assuming that it is stored at the same path as this script
@@ -38,13 +40,6 @@ def main():
             time.sleep(0.2)
         # to load next 400 images
         time.sleep(0.5)
-        #try:
-        #    elmt=driver.find_element_by_xpath("//input[@value='Show more results']")
-        #    elmt.location_once_scrolled_into_view
-        #    elmt.click()
-        #except Exception as e:
-        #    print ("Less images found:", e)
-        #    break
 
     # imges = driver.find_elements_by_xpath('//div[@class="rg_meta"]') # not working anymore
     # imges = driver.find_elements_by_xpath('//div[contains(@class,"rg_meta")]')
@@ -72,7 +67,44 @@ def main():
             break
 
     print ("Total downloaded: ", downloaded_img_count, "/", img_count)
+
+    resize_images(searchtext.replace(" ", "_"));
+
+    make_clip(searchtext.replace(" ", "_"));
+    
     driver.quit()
 
+def resize_images(name):
+    
+
+def make_clip(name):
+    first = ColorClip((500, 400), (50, 150, 255), duration=4)
+    text = TextClip("top 20 " + name, fontsize=40, color='white')
+    text = text.set_pos('center').set_duration(4)
+    first = CompositeVideoClip([first, text])
+
+    images = len(glob.glob("dataset\\" + name + "\\*.jpg"))
+    
+    for x in range(images):
+        txtOne = ColorClip((500, 400), (50, 150, 255), duration=3)
+        txtTwo = TextClip("number " + str(images - x), fontsize=40, color='white')
+        txtTwo = txtTwo.set_pos('center').set_duration(3)
+        txtTwo = CompositeVideoClip([txtOne, txtTwo])
+        first = concatenate_videoclips([first, txtTwo])
+        
+        img = (ImageClip("dataset\\" + name + "\\" + str(x) + ".jpg").set_duration(4).set_position(("center", "center")))
+        clip = ColorClip((500, 400), (50, 150, 255), duration=4)
+        clip = CompositeVideoClip([clip, img])
+        first = concatenate_videoclips([first, clip])
+    
+    endOne = ColorClip((500, 400), (50, 150, 255), duration=3)
+    endTwo = TextClip("thx for whatcing", fontsize=40, color='white')
+    endTwo = endTwo.set_pos('center').set_duration(3)
+    endTwo = CompositeVideoClip([endOne, endTwo])
+    first = concatenate_videoclips([first, endTwo])
+
+    first.write_videofile(name + '.mp4', fps=30) 
+
 if __name__ == "__main__":
-    main()
+    #main()
+    #make_clip("freddy fazbear");
