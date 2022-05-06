@@ -21,7 +21,7 @@ def main():
     if not os.path.exists(download_path + searchtext.replace(" ", "_")):
         os.makedirs(download_path + searchtext.replace(" ", "_"))
 
-    url = "https://www.google.co.in/search?q="+searchtext+"&source=lnms&tbm=isch"
+    url = "https://www.google.com/search?q="+searchtext+"&source=lnms&tbm=isch"
     driver = webdriver.Firefox()
     driver.get(url)
 
