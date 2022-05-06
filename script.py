@@ -1,7 +1,9 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from moviepy.editor import *
+from PIL import Image
 import os
+import subprocess
 import json
 import urllib.request
 import urllib.error
@@ -49,7 +51,7 @@ def main():
         img_count += 1
         img_url = img.get_attribute('src')
         img_type = "jpg"
-        print ("Downloading image", img_count, ": ", img_url)
+        #print ("Downloading image", img_count, ": ", img_url)
         try:
             if img_type not in extensions:
                 img_type = "jpg"
@@ -68,43 +70,61 @@ def main():
 
     print ("Total downloaded: ", downloaded_img_count, "/", img_count)
 
-    resize_images(searchtext.replace(" ", "_"));
+    resize_images(searchtext);
 
-    make_clip(searchtext.replace(" ", "_"));
+    make_clip(searchtext);
     
     driver.quit()
 
 def resize_images(name):
-    
+    for file in glob.glob("dataset\\" + name.replace(" ", "_") + "\\*.jpg"):
+        print("aaa")
+        i = Image.open(file);
+        i = i.resize((400, 300))
+        i = i.convert('RGB')
+        i.save(file)
+        
 
 def make_clip(name):
-    first = ColorClip((500, 400), (50, 150, 255), duration=4)
-    text = TextClip("top 20 " + name, fontsize=40, color='white')
-    text = text.set_pos('center').set_duration(4)
-    first = CompositeVideoClip([first, text])
+    images = len(glob.glob("dataset\\" + name.replace(" ", "_") + "\\*.jpg"))
+    vidLen = 24
 
-    images = len(glob.glob("dataset\\" + name + "\\*.jpg"))
+    first = ColorClip((400, 300), (50, 150, 255), duration=20)
+    text = TextClip("top " + str(images) + " " + name, fontsize=40, color='white')
+    text = text.set_pos('center').set_duration(20)
+    first = CompositeVideoClip([first, text])
     
     for x in range(images):
-        txtOne = ColorClip((500, 400), (50, 150, 255), duration=3)
+        txtOne = ColorClip((400, 300), (50, 150, 255), duration=3)
         txtTwo = TextClip("number " + str(images - x), fontsize=40, color='white')
         txtTwo = txtTwo.set_pos('center').set_duration(3)
         txtTwo = CompositeVideoClip([txtOne, txtTwo])
         first = concatenate_videoclips([first, txtTwo])
+        vidLen = vidLen + 3
         
-        img = (ImageClip("dataset\\" + name + "\\" + str(x) + ".jpg").set_duration(4).set_position(("center", "center")))
-        clip = ColorClip((500, 400), (50, 150, 255), duration=4)
+        img = (ImageClip("dataset\\" + name.replace(" ", "_") + "\\" + str(x) + ".jpg").set_duration(4).set_position(("center", "center")))
+        clip = ColorClip((400, 300), (50, 150, 255), duration=4)
         clip = CompositeVideoClip([clip, img])
         first = concatenate_videoclips([first, clip])
+        vidLen = vidLen + 4
     
-    endOne = ColorClip((500, 400), (50, 150, 255), duration=3)
+    endOne = ColorClip((400, 300), (50, 150, 255), duration=4)
     endTwo = TextClip("thx for whatcing", fontsize=40, color='white')
-    endTwo = endTwo.set_pos('center').set_duration(3)
+    endTwo = endTwo.set_pos('center').set_duration(4)
     endTwo = CompositeVideoClip([endOne, endTwo])
     first = concatenate_videoclips([first, endTwo])
 
-    first.write_videofile(name + '.mp4', fps=30) 
+    first.write_videofile(name + '.mp4', fps=30)
+
+    #bitrate = vidLen / 6
+
+    #ffmpeg -i ../../tos.avi -c:v libx264 -b:v 500k tos_500k.mp4
+    # reduce bitrate
+    subprocess.call(['ffmpeg', '-i', name + '.mp4', '-b:v', '10k', name + '2.mp4'])
+
+    # cut first 15 sec because the bitrate is very biased to the beginning for some reason. it is ugly
+    # so i made the beginning very long so we could cut it here
+    subprocess.call(['ffmpeg', '-i', name + '2.mp4', '-ss', '15', name + '3.mp4'])
 
 if __name__ == "__main__":
-    #main()
-    #make_clip("freddy fazbear");
+    main()
